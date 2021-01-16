@@ -10,8 +10,8 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
-export_file_url = 'https://www.googleapis.com/drive/v3/files/1-2aRBoNXQjtpeItkiufPcMCRZISYpSg7?alt=media&key=AIzaSyAu25E2jeHqFjPGzH6ZV0mPEzWfyaRo5ZI'
-export_file_name = 'chess1.pkl'
+export_file_url = 'https://drive.google.com/uc?export=download&id=1jZgwjgy8CcLOhGP5OLNa4gB9d_bJyvoM'
+export_file_name = 'export.pkl'
 
 Port = int(os.environ.get('PORT', 50000))
 
