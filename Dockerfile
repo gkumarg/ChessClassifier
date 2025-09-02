@@ -1,16 +1,37 @@
-FROM python:3.7.9-slim-stretch
+FROM python:3.11.9-slim
 
-RUN apt-get update && apt-get install -y git python3-dev gcc \
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy requirements first for better caching
 COPY requirements.txt .
 
-RUN pip install --upgrade -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
+# Copy application code
 COPY app app/
 
-RUN python app/server.py
+# Create non-root user for security
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
 
+# Switch to non-root user
+USER appuser
+
+# Expose port
 EXPOSE 5000
 
-CMD ["python", "app/server.py", "serve"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')" || exit 1
+
+# Run the application
+CMD ["python", "app/server.py"]
