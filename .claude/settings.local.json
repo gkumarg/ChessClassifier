@@ -5,7 +5,8 @@
       "Bash(docker:*)",
       "Bash(pip install:*)",
       "Bash(python:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []

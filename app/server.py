@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # Configuration
 PORT = int(os.environ.get('PORT', 5000))
-MODEL_URL = os.environ.get('MODEL_URL', 'https://drive.google.com/uc?export=download&id=1jZgwjgy8CcLOhGP5OLNa4gB9d_bJyvoM')
+MODEL_URL = os.environ.get('MODEL_URL', 'https://github.com/gkumarg/ChessClassifier/releases/download/v0.1/export.pkl')
 ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:5000').split(',')
 MAX_FILE_SIZE = int(os.environ.get('MAX_FILE_SIZE_MB', 10)) * 1024 * 1024  # Convert MB to bytes
 RATE_LIMIT_PER_MINUTE = int(os.environ.get('RATE_LIMIT_PER_MINUTE', 30))
