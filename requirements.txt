@@ -1,5 +1,5 @@
 aiofiles==23.2.1
-aiohttp==3.13.3
+aiohttp==3.13.4
 fastai==2.7.14
 torch==2.2.1
 torchvision==0.17.1
