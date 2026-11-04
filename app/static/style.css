@@ -62,3 +62,8 @@ button.analyze-button {
 button:focus {
     outline: 0;
 }
+
+.probabilities {
+    text-align: left;
+    display: inline-block;
+}

@@ -73,12 +73,11 @@ function analyze() {
   el("result-label").textContent = "Processing...";
   
   const xhr = new XMLHttpRequest();
-  const loc = window.location;
   
   // Set timeout for request
   xhr.timeout = 30000; // 30 seconds
   
-  xhr.open("POST", `${loc.protocol}//${loc.hostname}:${loc.port}/analyze`, true);
+  xhr.open("POST", "/analyze", true);
   
   xhr.onerror = function() {
     analyzeBtn.disabled = false;
@@ -101,22 +100,35 @@ function analyze() {
         const response = JSON.parse(e.target.responseText);
         
         if (this.status === 200) {
-          // Success - display results
-          let resultHTML = `<strong>Result:</strong> ${response.result}`;
-          
+          // Success - display results (built from DOM nodes so response text is never parsed as HTML)
+          const label = el("result-label");
+          label.replaceChildren();
+          const addLine = (title, value) => {
+            const strong = document.createElement("strong");
+            strong.textContent = title;
+            label.append(strong, ` ${value}`);
+          };
+
+          addLine("Result:", response.result);
+
           if (response.confidence) {
-            resultHTML += `<br><strong>Confidence:</strong> ${response.confidence}`;
+            label.append(document.createElement("br"));
+            addLine("Confidence:", response.confidence);
           }
-          
+
           if (response.all_probabilities) {
-            resultHTML += '<br><br><strong>All Probabilities:</strong><ul style="text-align: left; display: inline-block;">';
+            label.append(document.createElement("br"), document.createElement("br"));
+            const heading = document.createElement("strong");
+            heading.textContent = "All Probabilities:";
+            const list = document.createElement("ul");
+            list.className = "probabilities";
             for (const [piece, prob] of Object.entries(response.all_probabilities)) {
-              resultHTML += `<li>${piece}: ${prob}</li>`;
+              const item = document.createElement("li");
+              item.textContent = `${piece}: ${prob}`;
+              list.append(item);
             }
-            resultHTML += '</ul>';
+            label.append(heading, list);
           }
-          
-          el("result-label").innerHTML = resultHTML;
         } else {
           // Error from server
           const errorMsg = response.error || 'An error occurred';
@@ -139,6 +151,13 @@ function analyze() {
     el("result-label").textContent = "Error: Failed to send request";
   }
 }
+
+// Wire up event handlers (no inline handlers, so the CSP can forbid inline scripts)
+document.addEventListener('DOMContentLoaded', function() {
+  el("choose-file-button").addEventListener('click', showPicker);
+  el("analyze-button").addEventListener('click', analyze);
+  el("file-input").addEventListener('change', function() { showPicked(this); });
+});
 
 // Add keyboard shortcuts
 document.addEventListener('keydown', function(e) {
