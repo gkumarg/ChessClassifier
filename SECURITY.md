@@ -1,107 +1,28 @@
-# Security Updates and Best Practices
+# Security Policy
 
-## Recent Security Improvements
+## Supported versions
 
-### 1. Dependency Updates
-- **Python**: 3.13
-- **FastAI**: 2.7.19 (latest 2.7.x; fastai>=2.8 cannot load the published export.pkl)
-- **PyTorch**: 2.6.0 / torchvision 0.21.0 (highest versions fastai 2.7.19 allows; CPU-only wheels in Docker)
-- **Starlette**: 1.10.0, **uvicorn**: 0.54.0, **aiohttp**: 3.14.5, **Pillow**: 13.0.0, **numpy**: 2.4.6
-- Re-exporting the model with fastai>=2.8 would allow moving to current torch releases
+Only the latest commit on `master` receives security fixes.
 
-### Model Integrity
-- `load_learner()` unpickles the model, which can execute arbitrary code
-- The downloaded model's SHA-256 is checked against `MODEL_SHA256` before loading; a mismatch is refused and the file deleted
-- Downloads are streamed to a temporary file and only moved into place once complete
+## Reporting a vulnerability
 
-### 2. Server Security Enhancements
+Please **don't open a public issue** for security problems.
 
-#### Input Validation
-- File size limits (10MB max)
-- Oversized requests rejected from `Content-Length` before the body is parsed
-- File type validation by extension and by decoded image format (JPEG, PNG, GIF, BMP, WebP)
-- Decompression-bomb protection via Pillow's pixel limit
-- Filename sanitization
-- Empty file checks
+Report them privately through GitHub instead: go to the repository's **Security** tab and click **Report a vulnerability**. Include what you found, how to reproduce it, and the impact you expect.
 
-#### Rate Limiting
-- 30 requests per minute per IP (configurable)
-- In-memory rate limiting; idle clients are evicted so memory stays bounded
-- Behind a proxy, set `FORWARDED_ALLOW_IPS` so uvicorn uses the real client IP
+This is a personal project maintained in spare time, so there's no guaranteed response time, but reports will be acknowledged and fixed as soon as practical.
 
-#### Security Headers (on every response)
-- Content-Security-Policy with no `unsafe-inline` (the frontend uses no inline scripts or styles)
-- X-Frame-Options: DENY / `frame-ancestors 'none'`
-- X-Content-Type-Options: nosniff
-- Referrer-Policy: strict-origin-when-cross-origin
+## Security measures in the app
 
-#### Frontend
-- Results are rendered with DOM nodes and `textContent`, never `innerHTML`
+- **Model integrity:** the model file is unpickled on load, which can execute code, so the server checks its SHA-256 against `MODEL_SHA256` first and refuses a file that doesn't match.
+- **Upload validation:** oversized requests are rejected before parsing; uploads are checked by extension and by decoded image format, with a pixel limit against decompression bombs.
+- **Rate limiting:** per-IP limit on `/analyze` (configurable with `RATE_LIMIT_PER_MINUTE`).
+- **Headers:** a strict Content-Security-Policy with no inline scripts, plus `X-Frame-Options`, `X-Content-Type-Options` and `Referrer-Policy` on every response.
+- **CORS and hosts:** restricted to `ALLOWED_ORIGINS` and `ALLOWED_HOSTS`; credentials are disabled.
+- **Container:** runs as a non-root user on a slim base image with no compiler toolchain.
 
-#### CORS Configuration
-- Configurable allowed origins (no longer wildcard)
-- Credentials disabled (the app uses no cookies)
-- Allowed hosts configurable via `ALLOWED_HOSTS`
+## Known limitations
 
-#### Error Handling
-- Generic error messages to prevent information leakage
-- Proper logging without exposing sensitive data
-- Graceful model loading failures
-
-### 3. Docker Security
-- Non-root user execution
-- Minimal base image (python:3.13-slim), no compiler toolchain
-- Health checks included
-- No cache for pip installations
-
-### 4. Configuration Management
-- Environment variables for sensitive data
-- .env file support with python-dotenv
-- Example configuration file provided
-- Model URL no longer hardcoded
-
-## Configuration
-
-Create a `.env` file based on `.env.example`:
-
-```env
-PORT=5000
-MODEL_URL=your_model_url_here
-MODEL_SHA256=sha256_of_that_model
-ALLOWED_HOSTS=localhost,127.0.0.1,yourdomain.com
-ALLOWED_ORIGINS=http://localhost:5000,https://yourdomain.com
-MAX_FILE_SIZE_MB=10
-RATE_LIMIT_PER_MINUTE=30
-```
-
-## Security Checklist
-
-✅ Dependencies updated to latest versions
-✅ Input validation on all user inputs
-✅ Rate limiting implemented
-✅ Security headers configured
-✅ CORS properly configured
-✅ Error handling prevents information leakage
-✅ Docker container runs as non-root user
-✅ Environment variables for configuration
-✅ File size and type restrictions
-✅ Request timeouts configured
-✅ Health check endpoint available
-
-## Monitoring
-
-The application includes:
-- Structured logging with timestamps
-- Health check endpoint at `/health`
-- Error tracking with stack traces (in logs only)
-
-## Future Recommendations
-
-1. Add authentication for production use
-2. Implement database for persistent rate limiting
-3. Add request signing/validation
-4. Consider using a reverse proxy (nginx) in production
-5. Implement monitoring and alerting
-6. Add automated security scanning in CI/CD
-7. Regular dependency updates schedule
-8. Consider implementing CAPTCHA for additional bot protection
+- PyTorch is held at 2.6 because the published model requires fastai 2.7. Some PyTorch advisories fixed in later versions are denial-of-service issues in code paths this app doesn't use.
+- Rate limits are kept in memory, so they reset on restart and aren't shared between instances.
+- There's no authentication; anyone who can reach the server can use the API.
