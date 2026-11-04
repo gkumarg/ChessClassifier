@@ -1,4 +1,9 @@
 *.pth
+.git
 .gitignore
+.claude
+.env
 Dockerfile
 README.md
+app/export.pkl
+**/__pycache__
